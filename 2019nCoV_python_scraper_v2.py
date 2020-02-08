@@ -45,12 +45,12 @@ def catch_daily():
 def catch_distribution():
     """抓取行政区域确诊分布数据"""
     
-    data = {'西藏':0}
-    url = 'https://view.inews.qq.com/g2/getOnsInfo?name=wuwei_ww_area_counts&callback=&_=%d'%int(time.time()*1000)
-    for item in json.loads(requests.get(url=url).json()['data']):
-        if item['area'] not in data:
-            data.update({item['area']:0})
-        data[item['area']] += int(item['confirm'])
+    data = {}
+    for item in lis:
+        
+        if item['pronvice'] not in data:
+            data.update({item['pronvice']:0})
+        data[item['pronvice']] += int(item['total_confirm'])
     
     return data
 
@@ -72,8 +72,8 @@ def plot_daily():
     plt.gcf().autofmt_xdate() # 优化标注（自动倾斜）
     plt.grid(linestyle=':') # 显示网格
     plt.legend(loc='best') # 显示图例
-    plt.savefig('2019-nCoV疫情曲线.png') # 保存为文件
-    #plt.show()
+    #plt.savefig('2019-nCoV疫情曲线.png') # 保存为文件
+    plt.show()
 
     
 def plot_distribution():
@@ -81,7 +81,7 @@ def plot_distribution():
     
     data = catch_distribution()
     
-    font = FontProperties(fname='res/simsun.ttf', size=14)
+    font = FontProperties(fname='china-shapefiles/simsun.ttf', size=14)
     lat_min = 0
     lat_max = 60
     lon_min = 70
@@ -100,8 +100,12 @@ def plot_distribution():
     axes = fig.add_axes((0.1, 0.12, 0.8, 0.8)) # rect = l,b,w,h
     
     m = Basemap(llcrnrlon=lon_min, urcrnrlon=lon_max, llcrnrlat=lat_min, urcrnrlat=lat_max, resolution='l', ax=axes)
-    m.readshapefile('res/china-shapefiles-master/china', 'province', drawbounds=True)
-    m.readshapefile('res/china-shapefiles-master/china_nine_dotted_line', 'section', drawbounds=True)
+    #m = Basemap(projection='ortho', lat_0=30, lon_0=105, resolution='l', ax=axes)
+    #m = Basemap(projection='ortho', lat_0=30, lon_0=105, resolution='l', ax=axes)
+
+
+    m.readshapefile('./china-shapefiles/china', 'province', drawbounds=True)
+    m.readshapefile('./china-shapefiles/china_nine_dotted_line', 'section', drawbounds=True)
     m.drawcoastlines(color='black') # 洲际线
     m.drawcountries(color='black')  # 国界线
     m.drawparallels(np.arange(lat_min,lat_max,10), labels=[1,0,0,0]) #画经度线
@@ -117,23 +121,33 @@ def plot_distribution():
             if key in pname:
                 if data[key] == 0:
                     color = '#f0f0f0'
+                    poly = Polygon(shape, facecolor=color, edgecolor=color)
+                    axes.add_patch(poly)
                 elif data[key] < 10:
                     color = '#ffaa85'
+                    poly = Polygon(shape, facecolor=color, edgecolor=color)
+                    axes.add_patch(poly)
                 elif data[key] <100:
                     color = '#ff7b69'
+                    poly = Polygon(shape, facecolor=color, edgecolor=color)
+                    axes.add_patch(poly)
                 elif  data[key] < 1000:
                     color = '#bf2121'
+                    poly = Polygon(shape, facecolor=color, edgecolor=color)
+                    axes.add_patch(poly)
                 else:
                     color = '#7f1818'
+                    poly = Polygon(shape, facecolor=color, edgecolor=color)
+                    axes.add_patch(poly)
                 break
-        
-        poly = Polygon(shape, facecolor=color, edgecolor=color)
-        axes.add_patch(poly)
+                
+
     
     axes.legend(handles, labels, bbox_to_anchor=(0.5, -0.11), loc='lower center', ncol=4, prop=font)
     axes.set_title("2019-nCoV疫情地图", fontproperties=font)
     FigureCanvasAgg(fig)
     fig.savefig('2019-nCoV疫情地图.png')
+    fig.set_visible(b=True)
 
 if __name__ == '__main__':
     plot_daily()
